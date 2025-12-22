@@ -1,0 +1,307 @@
+import 'dart:typed_data';
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFF5CE1E6),
+      brightness: Brightness.dark,
+    );
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: colorScheme,
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.04),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: colorScheme.primary),
+          ),
+        ),
+      ),
+      home: const MainScreen(),
+    );
+  }
+}
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  final List<String> modes = const ['Поменять прическу', 'Поменять стиль', 'Поменять ракурс'];
+  final TextEditingController _chatController = TextEditingController();
+  String selectedMode = 'Поменять прическу';
+  Uint8List? _imageBytes;
+  bool _showOriginal = false; // Для кнопки "Оригинал"
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      setState(() => _imageBytes = bytes);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0F172A), Color(0xFF0B132B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 900;
+                return Column(
+                  children: [
+                    _buildHeader(constraints.maxWidth),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: Flex(
+                        direction: isWide ? Axis.horizontal : Axis.vertical,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // ЧАТ
+                          Expanded(
+                            flex: isWide ? 2 : 1,
+                            child: _FrostedCard(
+                              padding: const EdgeInsets.all(18),
+                              child: _buildChatPanel(scheme, isWide),
+                            ),
+                          ),
+                          SizedBox(width: isWide ? 16 : 0, height: isWide ? 0 : 16),
+                          // ПРЕВЬЮ
+                          Expanded(
+                            flex: isWide ? 3 : 2,
+                            child: _FrostedCard(
+                              padding: const EdgeInsets.all(18),
+                              child: _buildPreviewPanel(scheme, constraints.maxWidth),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(double width) {
+    return Row(
+      children: [
+        Expanded( // FIX: Позволяет тексту занимать свободное место и не выталкивать иконку
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text('AI Style Lab', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('Только изображения человека', style: TextStyle(color: Colors.white60, fontSize: 13), overflow: TextOverflow.ellipsis),
+            ],
+          ),
+        ),
+        if (width > 500) // Скрываем на очень узких экранах
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.white.withOpacity(0.05),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Row(
+              children: const [
+                Icon(Icons.shield_rounded, color: Colors.cyanAccent, size: 16),
+                SizedBox(width: 8),
+                Text('Face-safe', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildChatPanel(ColorScheme scheme, bool isWide) {
+    return Column(
+      children: [
+        DropdownButtonFormField<String>(
+          value: selectedMode,
+          isExpanded: true,
+          dropdownColor: const Color(0xFF1E293B),
+          decoration: const InputDecoration(labelText: 'Режим', prefixIcon: Icon(Icons.auto_awesome)),
+          items: modes.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+          onChanged: (val) => setState(() => selectedMode = val!),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: TextField(
+            controller: _chatController,
+            maxLines: null,
+            expands: true,
+            textAlignVertical: TextAlignVertical.top,
+            decoration: const InputDecoration(hintText: 'Что изменить?'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // FIX: Используем Wrap вместо Row для кнопок, чтобы они не переполняли экран
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () {}, 
+              icon: const Icon(Icons.send, size: 16), 
+              label: const Text('Пуск')
+            ),
+            OutlinedButton(
+              onPressed: () {}, 
+              child: const Text('Подсказка', style: TextStyle(fontSize: 12))
+            ),
+            // Метка текущего режима
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(selectedMode, 
+                style: TextStyle(color: scheme.primary.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreviewPanel(ColorScheme scheme, double width) {
+    final bool isSmall = width < 600;
+
+    return Column(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: scheme.primary.withOpacity(0.3)),
+                color: Colors.black26,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: _imageBytes == null
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_a_photo_outlined, size: 40, color: scheme.primary),
+                          const SizedBox(height: 8),
+                          const Text('Нажмите, чтобы загрузить'),
+                        ],
+                      )
+                    : Opacity(
+                        opacity: _showOriginal ? 0.5 : 1.0, // Эффект при просмотре оригинала
+                        child: Image.memory(_imageBytes!, fit: BoxFit.contain),
+                      ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // FIX: Нижние кнопки управления
+        Row(
+          children: [
+            // Кнопка Оригинал - на маленьких экранах только иконка
+            ElevatedButton(
+              onPressed: _imageBytes == null ? null : () {
+                setState(() => _showOriginal = !_showOriginal);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _showOriginal ? scheme.primary : null,
+                foregroundColor: _showOriginal ? Colors.black : null,
+              ),
+              child: isSmall ? const Icon(Icons.history) : const Text('Оригинал'),
+            ),
+            const Spacer(),
+            // Навигация
+            _roundBtn(Icons.chevron_left, () {}),
+            const SizedBox(width: 8),
+            _roundBtn(Icons.chevron_right, () {}),
+            const Spacer(),
+            // Кнопка Скачать
+            OutlinedButton(
+              onPressed: _imageBytes == null ? null : () {},
+              child: isSmall ? const Icon(Icons.download) : const Text('Скачать'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _roundBtn(IconData icon, VoidCallback onTap) {
+    return IconButton.filledTonal(
+      onPressed: onTap,
+      icon: Icon(icon),
+      style: IconButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+    );
+  }
+}
+
+class _FrostedCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets padding;
+  const _FrostedCard({required this.child, required this.padding});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
