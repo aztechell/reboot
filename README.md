@@ -4,6 +4,8 @@ AI-приложение для изменения внешнего вида на
 
 Авторы: Команда undefined.
 
+Хакатон: [Winter GDG AI Hackathon 2025](https://gdg.community.dev/events/details/google-gdg-taldykorgan-presents-winter-gdg-ai-hackathon-2025/)
+
 100% Вайбкодинг на GPT-5.1-Codex-Max.
 
 Сайт был размещён на firebase [https://reboot-waih.web.app/](https://reboot-waih.web.app/)
@@ -19,6 +21,7 @@ AI-приложение для изменения внешнего вида на
 |---------|-----------|
 | ![](examples/1.jpg) | ![](examples/2.png) |
 | ![](examples/3.jpg) | ![](examples/4.png) |
+| ![](examples/5.jpg) | ![](examples/6.jpg) |
 
 
 ## Технологии / архитектура
