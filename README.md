@@ -24,6 +24,10 @@ AI-приложение для изменения внешнего вида на
 | ![](examples/5.jpg) | ![](examples/6.jpg) |
 
 
+## Интерфейс
+![](examples/int.png)
+
+
 ## Технологии / архитектура
 - Flutter (web-first, поддерживает mobile/desktop).
 - `lib/state/app_state.dart` — ChangeNotifier со стейтом (история, режимы, вызовы API).
