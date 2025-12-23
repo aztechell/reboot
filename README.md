@@ -66,10 +66,6 @@ flutter build web --release --dart-define=STABILITY_API_KEY=ваш_ключ
 firebase deploy --only hosting
 ```
 
-## Тесты / качество
-- Анализ: `flutter analyze`
-- (Добавить) Unit-тесты для `AppState` и сервисов (моки HTTP/скачивания).
-
 ## Структура
 - `lib/main.dart` — UI и композиция.
  - `lib/state/app_state.dart` — стейт: режимы, история, обработка, скачивание.
